@@ -24,6 +24,7 @@ from collections import Counter
 from typing import Iterator, Dict, List
 # https://github.com/briney/nwalign3
 # ftp://ftp.ncbi.nih.gov/blast/matrices/
+import numpy as np 
 import nwalign3 as nw
 
 __author__ = "Cassandra GBABOUA"
@@ -144,7 +145,23 @@ def abundance_greedy_clustering(amplicon_file: Path, minseqlen: int, mincount: i
     :param kmer_size: (int) A fournir mais non utilise cette annee
     :return: (list) A list of all the [OTU (str), count (int)] .
     """
-    pass
+    np.int = int
+    my_sequences = list(dereplication_fulllength(amplicon_file, minseqlen, mincount))
+    
+    # Initialize an empty list to hold the OTUs
+    otu_list = []
+    for seq, count in my_sequences:
+        is_otu = True
+        for otu, otu_count in otu_list:
+            alignment = nw.global_align(seq, otu, gap_open=-1, gap_extend=-1)
+            score_identity = get_identity(alignment)
+            if score_identity > 97:
+                if otu_count > count:
+                    is_otu = False
+                    break     
+        if is_otu:
+            otu_list.append([seq, count])
+    return otu_list
 
 
 def write_OTU(OTU_list: List, output_file: Path) -> None:
@@ -153,8 +170,13 @@ def write_OTU(OTU_list: List, output_file: Path) -> None:
     :param OTU_list: (list) A list of OTU sequences
     :param output_file: (Path) Path to the output file
     """
-    pass
-
+    counter = 1
+    with open(output_file, "w") as filout:
+        for seq, count in OTU_list:
+            filout.write(f">OTU_{counter} occurrence:{count}\n")
+            formatted_seq = textwrap.fill(seq, width=80)
+            filout.write(f"{formatted_seq}\n")
+            counter += 1
 
 #==============================================================
 # Main program
