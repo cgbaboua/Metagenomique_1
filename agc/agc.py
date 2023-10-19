@@ -105,7 +105,17 @@ def dereplication_fulllength(amplicon_file: Path, minseqlen: int, mincount: int)
     :param mincount: (int) Minimum amplicon count
     :return: A generator object that provides a (list)[sequences, count] of sequence with a count >= mincount and a length >= minseqlen.
     """
-    pass
+    occ_seq = {}
+    my_sequences = read_fasta(amplicon_file,minseqlen)
+    for seq in my_sequences :
+        if seq in occ_seq :
+            occ_seq[seq] += 1
+        else :
+            occ_seq[seq] = 1
+    sorted_occ_seq = sorted(occ_seq.items(), key=lambda x: x[1], reverse=True)
+    for seq, count in sorted_occ_seq:
+        if count >= mincount:
+            yield [seq, count]
 
 def get_identity(alignment_list: List[str]) -> float:
     """Compute the identity rate between two sequences
